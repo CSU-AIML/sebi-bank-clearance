@@ -2,19 +2,31 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# Copy requirements first for better caching
-COPY requirements.txt .
+# Copy backend requirements and install
+COPY backend/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Copy entire project
 COPY . .
 
-# Copy models and data (these should be committed to your repo)
-COPY ../models ./models
-COPY ../data ./data
+# Make sure models are available
+# No need for COPY ../models as they're already in the structure
 
-# Expose the port your app runs on
-EXPOSE 5000
+# Install frontend dependencies and build if needed
+RUN apt-get update && apt-get install -y \
+    curl \
+    gnupg \
+    && curl -sL https://deb.nodesource.com/setup_16.x | bash - \
+    && apt-get install -y nodejs \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Command to run the application
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
+# Set environment variables
+ENV FLASK_APP=backend/app.py
+ENV FLASK_DEBUG=0
+
+# Expose the port (Render will set PORT env var)
+EXPOSE ${PORT:-5000}
+
+# Run the backend
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-5000} backend.app:app"]
