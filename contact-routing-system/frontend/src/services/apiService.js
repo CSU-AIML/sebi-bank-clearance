@@ -9,7 +9,6 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
   timeout: 10000, // Prevent hanging requests
-  withCredentials: true, // Enable cookie-based auth if server supports it
 });
 
 // Response Interceptor with minimal error exposure
