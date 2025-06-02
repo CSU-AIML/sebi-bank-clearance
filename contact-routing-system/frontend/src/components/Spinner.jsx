@@ -1,7 +1,11 @@
+import { HashLoader } from "react-spinners";
+
 function Spinner() {
   return (
-    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-  )
+    <div className="flex items-center justify-center">
+      <HashLoader color="#2563eb" size={50} />
+    </div>
+  );
 }
 
-export default Spinner
+export default Spinner;

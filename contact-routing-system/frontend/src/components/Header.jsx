@@ -1,175 +1,455 @@
-import { Link } from 'react-router-dom'
-import { useState, useEffect } from 'react'
-import { Menu, X, Github, BarChart3, User, Settings, Users } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom';
+import { useState, useEffect, useCallback, memo } from 'react';
+import {
+  Menu,
+  X,
+  Github,
+  BarChart3,
+  User,
+  Settings,
+  Users,
+  ChevronDown,
+  Search,
+  Bell,
+  Zap,
+  Moon,
+  Sun,
+  Star,
+} from 'lucide-react';
+import { NotificationBell } from './NotificationBell';
 
-function Header() {
-  const [isScrolled, setIsScrolled] = useState(false)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+const NavItem = memo(({ to, label, Icon, isScrolled, onClick, isActive = false }) => (
+  <li className="relative group">
+    <Link
+      to={to}
+      onClick={onClick}
+      className={`relative flex items-center gap-2 text-sm font-semibold px-3 lg:px-4 py-2.5 rounded-2xl transition-all duration-300 group overflow-hidden transform hover:scale-105 active:scale-95 ${
+        isActive
+          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25'
+          : isScrolled
+          ? 'text-slate-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:text-blue-700 hover:shadow-md'
+          : 'text-white hover:bg-white/20 backdrop-blur-sm hover:shadow-lg'
+      }`}
+    >
+      {/* Animated background gradient */}
+      <div className={`absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${!isActive ? 'group-hover:animate-pulse' : ''}`} />
+      
+      {/* Icon with rotation on hover */}
+      <div className="relative z-10 transition-transform duration-300 group-hover:rotate-12">
+        <Icon size={16} lg:size={18} className={isActive ? 'drop-shadow-sm' : ''} />
+      </div>
+      
+      <span className="relative z-10 hidden sm:inline">{label}</span>
+      
+      {/* Active indicator */}
+      {isActive && (
+        <div className="absolute bottom-0 left-1/2 w-1 h-1 bg-white rounded-full transform -translate-x-1/2 animate-pulse" />
+      )}
+      
+      {/* Shimmer effect */}
+      <div className="absolute inset-0 -top-2 -bottom-2 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 group-hover:animate-shimmer transform -skew-x-12 transition-opacity duration-500" />
+    </Link>
+  </li>
+));
 
-  // Handle scroll effect
+const MobileNavItem = memo(({ to, label, Icon, onClick, isActive = false }) => (
+  <li className="overflow-hidden relative group">
+    <Link
+      to={to}
+      onClick={onClick}
+      className={`flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 group transform hover:scale-[1.02] hover:translate-x-2 active:scale-98 ${
+        isActive
+          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25'
+          : 'text-slate-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:text-blue-700 hover:shadow-md'
+      }`}
+    >
+      <div className={`p-2 rounded-xl transition-all duration-300 transform group-hover:rotate-12 ${
+        isActive 
+          ? 'bg-white/20' 
+          : 'bg-gradient-to-br from-blue-100 to-purple-100 group-hover:from-blue-200 group-hover:to-purple-200'
+      }`}>
+        <Icon size={20} className={isActive ? 'text-white' : 'text-blue-600'} />
+      </div>
+      <span className="font-semibold text-base">{label}</span>
+      
+      {/* Arrow indicator */}
+      <div className="absolute right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+        <ChevronDown size={16} className="rotate-[-90deg]" />
+      </div>
+    </Link>
+  </li>
+));
+
+const SearchBar = memo(({ isScrolled }) => (
+  <div className={`hidden lg:flex items-center gap-2 px-4 py-2 rounded-2xl transition-all duration-300 transform hover:scale-[1.02] ${
+    isScrolled 
+      ? 'bg-slate-100 border border-slate-200 hover:shadow-md' 
+      : 'bg-white/20 backdrop-blur-md border border-white/30 hover:bg-white/25'
+  }`}>
+    <Search size={16} className={`transition-colors duration-300 ${isScrolled ? 'text-slate-500' : 'text-white/70'}`} />
+    <input
+      type="text"
+      placeholder="Search anything..."
+      className={`bg-transparent outline-none text-sm font-medium placeholder:font-normal w-32 xl:w-48 transition-colors duration-300 ${
+        isScrolled ? 'text-slate-700 placeholder:text-slate-400' : 'text-white placeholder:text-white/60'
+      }`}
+    />
+    <div className={`px-2 py-1 rounded-lg text-xs font-medium transition-all duration-300 hover:scale-110 ${
+      isScrolled ? 'bg-slate-200 text-slate-600' : 'bg-white/20 text-white/80'
+    }`}>
+      ⌘K
+    </div>
+  </div>
+));
+
+const UserAvatar = memo(({ isScrolled }) => (
+  <div className="relative">
+    <button className={`p-2 rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 ${
+      isScrolled 
+        ? 'bg-gradient-to-br from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 hover:shadow-md' 
+        : 'bg-white/20 backdrop-blur-md hover:bg-white/30'
+    }`}>
+      <div className="w-6 h-6 md:w-8 md:h-8 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+        <User size={14} md:size={18} className="text-white" />
+      </div>
+    </button>
+    
+    {/* Online indicator with pulse */}
+    <div className="absolute -top-1 -right-1 w-3 h-3 md:w-4 md:h-4 bg-green-500 rounded-full border-2 border-white shadow-lg animate-pulse" />
+  </div>
+));
+
+// Updated Header component with notification integration
+const Header = ({ notificationService }) => {
+  const location = useLocation();
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [hasShadow, setHasShadow] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const handleScroll = useCallback(() => {
+    const scrollY = window.scrollY;
+    setIsScrolled(scrollY > 20);
+    setHasShadow(scrollY > 80);
+  }, []);
+
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 10) {
-        setIsScrolled(true)
-      } else {
-        setIsScrolled(false)
+    let lastScrollTime = 0;
+    const debouncedHandleScroll = () => {
+      const now = Date.now();
+      if (now - lastScrollTime > 16) {
+        handleScroll();
+        lastScrollTime = now;
       }
-    }
+    };
 
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+    window.addEventListener('scroll', debouncedHandleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', debouncedHandleScroll);
+  }, [handleScroll]);
+
+  const navItems = [
+    { to: '/', label: 'Dashboard', Icon: BarChart3 },
+    { to: '/contacts', label: 'Contacts', Icon: Users },
+    { to: '/settings', label: 'Settings', Icon: Settings }, // Added settings route
+  ];
+
+  // Mobile nav items - matching your actual routes
+  const mobileNavItems = [
+    { to: '/', label: 'Dashboard', Icon: BarChart3 },
+    { to: '/contacts', label: 'Contacts', Icon: Users },
+    { to: '/settings', label: 'Settings', Icon: Settings },
+  ];
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isMobileMenuOpen && !event.target.closest('.mobile-menu-container')) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMobileMenuOpen]);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileMenuOpen]);
 
   return (
-    <header className={`${isScrolled 
-      ? 'bg-white text-blue-800 shadow-lg' 
-      : 'bg-gradient-to-r from-blue-800 to-blue-600 text-white'} 
-      fixed w-full z-10 transition-all duration-300`}>
-      <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-        {/* Logo */}
-        <Link to="/" className="flex items-center space-x-2 group">
-          <div className="h-8 w-8 bg-blue-100 rounded-lg flex items-center justify-center 
-                    text-blue-800 shadow-sm group-hover:bg-white transition-all">
-            <span className="font-bold text-lg">B</span>
-          </div>
-          <span className={`${isScrolled ? 'text-blue-800' : 'text-white'} 
-                    font-bold text-xl tracking-tight`}>
-            Banking Router
-          </span>
-        </Link>
+    <>
+      <style>{`
+        @keyframes shimmer {
+          0% { transform: translateX(-100%) skewX(-12deg); }
+          100% { transform: translateX(200%) skewX(-12deg); }
+        }
+        .animate-shimmer {
+          animation: shimmer 1.5s ease-in-out;
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+        .animate-float {
+          animation: float 3s ease-in-out infinite;
+        }
+        @keyframes glow {
+          0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+          50% { box-shadow: 0 0 30px rgba(147, 51, 234, 0.4), 0 0 40px rgba(59, 130, 246, 0.2); }
+        }
+        .animate-glow {
+          animation: glow 2s ease-in-out infinite;
+        }
+        @keyframes gradient-shift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        .animate-gradient {
+          background-size: 200% 200%;
+          animation: gradient-shift 6s ease infinite;
+        }
+        @keyframes slideInFromRight {
+          0% {
+            opacity: 0;
+            transform: translateX(50px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+      `}</style>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:block">
-          <ul className="flex items-center space-x-6">
-            <li>
-              <Link to="/" className={`flex items-center space-x-1 ${isScrolled 
-                ? 'hover:text-blue-600' 
-                : 'hover:text-blue-100'} 
-                transition-colors py-2`}>
-                <BarChart3 size={18} />
-                <span>Dashboard</span>
-              </Link>
-            </li>
-            <li>
-              <Link to="/contacts" className={`flex items-center space-x-1 ${isScrolled 
-                ? 'hover:text-blue-600' 
-                : 'hover:text-blue-100'} 
-                transition-colors py-2`}>
-                <Users size={18} />
-                <span>Contacts</span>
-              </Link>
-            </li>
-            <li>
-              <Link to="/profile" className={`flex items-center space-x-1 ${isScrolled 
-                ? 'hover:text-blue-600' 
-                : 'hover:text-blue-100'} 
-                transition-colors py-2`}>
-                <User size={18} />
-                <span>Profile</span>
-              </Link>
-            </li>
-            <li>
-              <Link to="/settings" className={`flex items-center space-x-1 ${isScrolled 
-                ? 'hover:text-blue-600' 
-                : 'hover:text-blue-100'} 
-                transition-colors py-2`}>
-                <Settings size={18} />
-                <span>Settings</span>
-              </Link>
-            </li>
-            <li className="ml-2">
-              <a 
-                href="https://github.com/yourusername/contact-routing-system" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className={`flex items-center space-x-1 ${isScrolled 
-                  ? 'bg-gray-100 hover:bg-gray-200 text-gray-800' 
-                  : 'bg-blue-700/30 hover:bg-blue-700/50 text-white'} 
-                  px-4 py-2 rounded-full transition-colors`}
-              >
-                <Github size={18} />
-                <span>GitHub</span>
-              </a>
-            </li>
-          </ul>
-        </nav>
+      {/* Premium Header */}
+      <header
+        className={`fixed w-full z-50 transition-all duration-500 transform ${
+          isScrolled 
+            ? 'bg-white/90 backdrop-blur-xl border-b border-slate-200/60 translate-y-0' 
+            : 'bg-gradient-to-r from-blue-600/95 via-purple-600/95 to-indigo-600/95 backdrop-blur-lg translate-y-0'
+        } ${hasShadow ? 'shadow-2xl shadow-blue-500/10' : ''}`}
+        style={{
+          background: !isScrolled 
+            ? 'linear-gradient(-45deg, #3b82f6, #8b5cf6, #6366f1, #3b82f6)' 
+            : undefined
+        }}
+      >
+        {/* Ambient glow effect */}
+        <div className={`absolute inset-0 transition-opacity duration-500 ${
+          isScrolled ? 'opacity-0' : 'opacity-100 animate-gradient'
+        }`} 
+        style={{
+          background: 'linear-gradient(-45deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1), rgba(99,102,241,0.1), rgba(59,130,246,0.1))',
+          backgroundSize: '400% 400%'
+        }} />
 
-        {/* Mobile Menu Button */}
-        <button 
-          className="md:hidden text-white hover:text-blue-100 focus:outline-none"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        >
-          {isMobileMenuOpen ? (
-            <X size={24} className={`${isScrolled ? 'text-blue-800' : 'text-white'}`} />
-          ) : (
-            <Menu size={24} className={`${isScrolled ? 'text-blue-800' : 'text-white'}`} />
-          )}
-        </button>
-      </div>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-3 md:py-4 flex justify-between items-center relative z-10">
+          {/* Enhanced Logo */}
+          <Link to="/" className="flex items-center space-x-2 md:space-x-3 group">
+            <div className={`relative h-10 w-10 md:h-12 md:w-12 rounded-2xl md:rounded-3xl shadow-xl flex items-center justify-center overflow-hidden transition-all duration-300 transform group-hover:scale-110 group-hover:rotate-12 group-active:scale-95 ${
+              isScrolled 
+                ? 'bg-gradient-to-br from-blue-500 to-purple-600 animate-glow' 
+                : 'bg-white/20 backdrop-blur-md border border-white/30'
+            }`}>
+              {/* Animated background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-purple-600 opacity-80" />
+              
+              {/* Logo text */}
+              <span className="relative z-10 font-bold text-lg md:text-xl text-white drop-shadow-lg transition-transform duration-300 group-hover:scale-110">
+                B
+              </span>
+              
+              {/* Sparkle effect */}
+              <div className="absolute top-0.5 right-0.5 md:top-1 md:right-1 transition-all duration-300 group-hover:scale-125">
+                <Star size={6} md:size={8} className="text-yellow-300 animate-pulse" />
+              </div>
+            </div>
+            
+            <div className="flex flex-col transition-transform duration-300 group-hover:translate-x-2">
+              <span className={`text-lg sm:text-xl md:text-2xl font-bold tracking-tight transition-all duration-300 ${
+                isScrolled ? 'text-slate-800' : 'text-white drop-shadow-lg'
+              }`}>
+                Banking Router
+              </span>
+              <span className={`text-xs font-medium transition-all duration-300 hidden sm:block ${
+                isScrolled ? 'text-slate-500' : 'text-white/70'
+              }`}>
+                Smart Financial Hub
+              </span>
+            </div>
+          </Link>
 
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden bg-white shadow-lg">
-          <nav className="container mx-auto px-4 py-3">
-            <ul className="space-y-2">
-              <li>
-                <Link 
-                  to="/" 
-                  className="flex items-center space-x-2 text-blue-800 hover:text-blue-600 py-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <BarChart3 size={18} />
-                  <span>Dashboard</span>
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/contacts" 
-                  className="flex items-center space-x-2 text-blue-800 hover:text-blue-600 py-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <Users size={18} />
-                  <span>Contacts Directory</span>
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/profile" 
-                  className="flex items-center space-x-2 text-blue-800 hover:text-blue-600 py-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <User size={18} />
-                  <span>Profile</span>
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/settings" 
-                  className="flex items-center space-x-2 text-blue-800 hover:text-blue-600 py-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <Settings size={18} />
-                  <span>Settings</span>
-                </Link>
-              </li>
-              <li className="pt-2 border-t border-gray-100">
-                <a 
-                  href="https://github.com/yourusername/contact-routing-system" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center space-x-2 text-gray-800 bg-gray-100 hover:bg-gray-200 p-3 rounded-lg"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <Github size={18} />
-                  <span>GitHub Repository</span>
-                </a>
-              </li>
+          {/* Enhanced Navigation */}
+          <nav className="hidden md:flex items-center gap-2" aria-label="Main navigation">
+            <ul className="flex gap-1">
+              {navItems.map(({ to, label, Icon }) => (
+                <NavItem 
+                  key={label} 
+                  to={to} 
+                  label={label} 
+                  Icon={Icon} 
+                  isScrolled={isScrolled}
+                  isActive={location.pathname === to}
+                  onClick={() => {}}
+                />
+              ))}
             </ul>
           </nav>
-        </div>
-      )}
-    </header>
-  )
-}
 
-export default Header
+          {/* Enhanced Right Section */}
+          <div className="flex items-center gap-2 md:gap-3">
+            {/* Search Bar */}
+            <SearchBar isScrolled={isScrolled} />
+            
+            {/* Notifications - Updated with notification service */}
+            <div className="hidden sm:block">
+              {notificationService ? (
+                <NotificationBell 
+                  notificationService={notificationService} 
+                  isScrolled={isScrolled} 
+                />
+              ) : (
+                // Fallback loading state
+                <div className={`p-2 md:p-2.5 rounded-2xl animate-pulse ${
+                  isScrolled 
+                    ? 'bg-slate-100' 
+                    : 'bg-white/20 backdrop-blur-md'
+                }`}>
+                  <Bell size={16} className={isScrolled ? 'text-slate-400' : 'text-white/50'} />
+                </div>
+              )}
+            </div>
+            
+            {/* User Avatar - Hidden on mobile to save space */}
+            <div className="hidden sm:block">
+              <UserAvatar isScrolled={isScrolled} />
+            </div>
+
+            {/* Enhanced Mobile Menu Button */}
+            <button
+              className={`md:hidden p-2.5 md:p-3 rounded-xl md:rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 ${
+                isScrolled 
+                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:shadow-md' 
+                  : 'bg-white/20 backdrop-blur-md hover:bg-white/30 text-white'
+              }`}
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={isMobileMenuOpen}
+            >
+              <div className={`transition-transform duration-300 ${isMobileMenuOpen ? 'rotate-180' : 'rotate-0'}`}>
+                {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+              </div>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Enhanced Mobile Menu */}
+      {isMobileMenuOpen && (
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden transition-opacity duration-300"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+          
+          {/* Menu Panel */}
+          <nav
+            className={`fixed top-0 right-0 h-full w-72 sm:w-80 z-50 bg-white/95 backdrop-blur-xl border-l border-slate-200 p-4 sm:p-6 md:hidden overflow-y-auto mobile-menu-container transition-transform duration-300 ${
+              isMobileMenuOpen ? 'transform translate-x-0' : 'transform translate-x-full'
+            }`}
+          >
+            {/* Mobile Header */}
+            <div className="flex items-center justify-between mb-6 sm:mb-8 animate-float">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg animate-glow">
+                  <span className="font-bold text-white">B</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-800">Banking Router</h3>
+                  <p className="text-xs text-slate-500">Smart Financial Hub</p>
+                </div>
+              </div>
+              
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all duration-300 transform hover:scale-105 hover:rotate-90 active:scale-95"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Mobile Navigation */}
+            <ul className="space-y-3 mb-6 sm:mb-8">
+              {mobileNavItems.map(({ to, label, Icon }, index) => (
+                <div
+                  key={label}
+                  className="transition-all duration-300"
+                  style={{
+                    animationDelay: `${index * 100}ms`,
+                    animation: 'slideInFromRight 0.5s ease-out forwards'
+                  }}
+                >
+                  <MobileNavItem 
+                    to={to} 
+                    label={label} 
+                    Icon={Icon} 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    isActive={location.pathname === to}
+                  />
+                </div>
+              ))}
+              
+              {/* Mobile Notification Bell */}
+              <div className="sm:hidden pt-3 border-t border-gray-200 mt-6">
+                <div className="p-3 bg-gray-50 rounded-xl">
+                  <h4 className="font-medium text-gray-800 mb-2 flex items-center gap-2">
+                    <Bell size={16} className="text-blue-600" />
+                    Notifications
+                  </h4>
+                  {notificationService && (
+                    <div className="text-sm text-gray-600">
+                      {notificationService.getUnreadCount()} unread notifications
+                    </div>
+                  )}
+                </div>
+              </div>
+            </ul>
+
+            {/* Mobile Footer */}
+            <div className="mt-auto pt-4 sm:pt-6 border-t border-slate-200">
+              <div className="flex items-center justify-between p-3 sm:p-4 rounded-2xl bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 transition-all duration-300">
+                <div className="flex items-center gap-3">
+                  <UserAvatar isScrolled={true} />
+                  <div>
+                    <p className="font-semibold text-slate-800">Banking Team</p>
+                    <p className="text-xs text-slate-500 flex items-center gap-1">
+                      <Star size={12} className="text-yellow-500" />
+                      Premium User
+                    </p>
+                  </div>
+                </div>
+                
+                <button
+                  onClick={() => setIsDarkMode(!isDarkMode)}
+                  className="p-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 transition-all duration-300 transform hover:scale-105 hover:rotate-180 active:scale-95 shadow-sm"
+                >
+                  {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+                </button>
+              </div>
+            </div>
+          </nav>
+        </>
+      )}
+    </>
+  );
+};
+
+export default Header;

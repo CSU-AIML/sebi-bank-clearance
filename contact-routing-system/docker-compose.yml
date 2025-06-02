@@ -1,16 +1,16 @@
-version: '3.8'
-
 services:
   backend:
-    build: ./contact-routing-system/backend
+    build: 
+      context: .  # Use current directory as build context
+      dockerfile: ./backend/Dockerfile
     container_name: banking-contact-backend
     restart: always
     ports:
       - "5001:5000"
     volumes:
-      - ./contact-routing-system/models:/app/models
-      - ./contact-routing-system/data:/app/data
-      - ./contact-routing-system/logs:/app/logs
+      - ./models:/app/models
+      - ./data:/app/data
+      - ./logs:/app/logs
     environment:
       - FLASK_APP=app.py
       - FLASK_DEBUG=0
@@ -19,7 +19,7 @@ services:
 
   frontend:
     build:
-      context: ./contact-routing-system/frontend
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: banking-contact-frontend
     restart: always
