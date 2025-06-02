@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Contacts from './pages/Contacts';
+import SebiDirectory from './components/SebiDirectory';
+import SebiRouting from './components/SebiRouting';
 import Header from './components/Header';
 import { Suspense, useEffect, useState } from 'react';
 import Spinner from './components/Spinner';
@@ -73,14 +75,14 @@ function App() {
   // Add demo notification for testing (remove in production)
   useEffect(() => {
     // Add a test notification after 5 seconds in development
-    if (process.env.NODE_ENV === 'development' && isNotificationServiceReady) {
+    if (import.meta.env.DEV && isNotificationServiceReady) {
       const timer = setTimeout(() => {
         notificationService.addNotification({
-          title: 'Welcome to Notification System!',
-          message: 'Your email reply notifications are now active. This is a test notification.',
+          title: 'Welcome to Banking Router!',
+          message: 'Your banking and SEBI contact routing system is now active. This is a test notification.',
           senderName: 'System',
           senderEmail: 'system@bankingrouter.com',
-          subject: 'System Test',
+          subject: 'System Welcome',
           snippet: 'This is a demo notification to show you how the system works.'
         });
       }, 5000);
@@ -101,47 +103,63 @@ function App() {
 
         {/* Suspense fallback for route-level loading protection */}
         <Suspense fallback={<Spinner />}>
-          <main className="container mx-auto p-4" role="main">
+          <main className="container mx-auto p-4 pt-24" role="main">
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route 
                 path="/contacts" 
                 element={<Contacts notificationService={notificationService} />} 
               />
-              {/* Add notification settings route */}
+              
+              {/* SEBI Routes */}
+              <Route path="/sebi/directory" element={<SebiDirectory />} />
+              <Route path="/sebi/routing" element={<SebiRouting />} />
+              
+              {/* Settings route */}
               <Route 
                 path="/settings" 
                 element={
                   <div className="max-w-4xl mx-auto">
-                    <h1 className="text-3xl font-bold text-gray-800 mb-8">Settings</h1>
-                    <NotificationSettings notificationService={notificationService} />
+                    <div className="bg-white rounded-2xl shadow-xl p-8 border border-purple-100">
+                      <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-8">
+                        Settings
+                      </h1>
+                      <NotificationSettings notificationService={notificationService} />
+                    </div>
                   </div>
                 } 
               />
-              {/* Add a catch-all route to handle unknown paths securely */}
+              
+              {/* 404 Route - Enhanced styling */}
               <Route
                 path="*"
                 element={
-                  <div className="text-center py-16">
-                    <div className="max-w-md mx-auto">
-                      <div className="text-6xl mb-4">🔍</div>
-                      <h1 className="text-4xl font-bold text-gray-800 mb-4">404</h1>
-                      <p className="text-xl text-red-600 mb-8">Page Not Found</p>
-                      <p className="text-gray-600 mb-8">
-                        The page you're looking for doesn't exist or has been moved.
-                      </p>
-                      <button
-                        onClick={() => window.history.back()}
-                        className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors mr-4"
-                      >
-                        Go Back
-                      </button>
-                      <a
-                        href="/"
-                        className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors inline-block"
-                      >
-                        Home
-                      </a>
+                  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50">
+                    <div className="text-center py-16">
+                      <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8 border border-purple-100">
+                        <div className="text-6xl mb-6">🔍</div>
+                        <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-4">
+                          404
+                        </h1>
+                        <p className="text-xl text-red-600 mb-6">Page Not Found</p>
+                        <p className="text-gray-600 mb-8">
+                          The page you're looking for doesn't exist or has been moved.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-4">
+                          <button
+                            onClick={() => window.history.back()}
+                            className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all transform hover:scale-105"
+                          >
+                            Go Back
+                          </button>
+                          <a
+                            href="/"
+                            className="bg-gray-100 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-200 transition-colors inline-block"
+                          >
+                            Home
+                          </a>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 }
@@ -158,67 +176,126 @@ function App() {
           />
         )}
 
-        {/* Footer */}
-        <footer className="text-center py-4 text-sm text-gray-600 border-t border-gray-200 bg-white">
-          <div className="container mx-auto px-4">
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-              <div>
-                © {new Date().getFullYear()} Bank Contact Routing System
+        {/* Enhanced Footer */}
+        <footer className="bg-white border-t border-gray-200 mt-16">
+          <div className="container mx-auto px-4 py-8">
+            <div className="flex flex-col lg:flex-row justify-between items-center gap-6">
+              {/* Logo and Description */}
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg">
+                  <span className="font-bold text-white">B</span>
+                </div>
+                <div>
+                  <div className="font-bold text-gray-800">Banking Router</div>
+                  <div className="text-sm text-gray-600">Smart Financial Hub</div>
+                </div>
               </div>
               
-              {/* Notification Status Indicator */}
-              {isNotificationServiceReady && (
-                <div className="flex items-center gap-2 text-xs">
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-green-600">Email notifications active</span>
-                  </div>
-                  
-                  {process.env.NODE_ENV === 'development' && (
-                    <div className="flex items-center gap-1 ml-4">
-                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                      <span className="text-orange-600">Dev Mode</span>
+              {/* Service Status */}
+              <div className="flex flex-col sm:flex-row items-center gap-6">
+                {isNotificationServiceReady && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="text-green-600">Notifications Active</span>
                     </div>
-                  )}
+                    
+                    {import.meta.env.DEV && (
+                      <div className="flex items-center gap-1 ml-4">
+                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                        <span className="text-orange-600">Dev Mode</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Copyright */}
+                <div className="text-sm text-gray-600">
+                  © {new Date().getFullYear()} Banking Router. All rights reserved.
                 </div>
-              )}
+              </div>
+            </div>
+            
+            {/* Service Links */}
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-2">Banking Services</h3>
+                  <ul className="space-y-1 text-gray-600">
+                    <li><a href="/contacts" className="hover:text-purple-600 transition-colors">Bank Contacts</a></li>
+                    <li><a href="/" className="hover:text-purple-600 transition-colors">Issue Routing</a></li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-2">SEBI Services</h3>
+                  <ul className="space-y-1 text-gray-600">
+                    <li><a href="/sebi/directory" className="hover:text-purple-600 transition-colors">Entity Directory</a></li>
+                    <li><a href="/sebi/routing" className="hover:text-purple-600 transition-colors">Issue Routing</a></li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-2">Support</h3>
+                  <ul className="space-y-1 text-gray-600">
+                    <li><a href="/settings" className="hover:text-purple-600 transition-colors">Settings</a></li>
+                    <li><span className="text-gray-400">Help Center</span></li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-2">Statistics</h3>
+                  <ul className="space-y-1 text-gray-600 text-xs">
+                    <li>🏦 Banking Partners</li>
+                    <li>📊 SEBI Entities</li>
+                    <li>🔔 Smart Notifications</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
         </footer>
 
         {/* Debug Panel for Development */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="fixed bottom-4 left-4 bg-gray-800 text-white p-3 rounded-lg text-xs z-40">
-            <div className="font-semibold mb-2">🔧 Debug Panel</div>
-            <div>Notifications: {isNotificationServiceReady ? '✅' : '⏳'}</div>
-            <div>Toast: {toastNotification ? '📢' : '🔇'}</div>
-            <button
-              onClick={() => {
-                notificationService.addNotification({
-                  title: 'Debug Test',
-                  message: 'Manual test notification',
-                  senderName: 'Debug',
-                  senderEmail: 'debug@test.com',
-                  subject: 'Debug Test'
-                });
-              }}
-              className="mt-2 bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded text-xs"
-            >
-              Test Notification
-            </button>
-            <button
-              onClick={() => {
-                console.log('Notification Service Status:', {
-                  isReady: isNotificationServiceReady,
-                  notifications: notificationService.notifications,
-                  unreadCount: notificationService.getUnreadCount(),
-                  isPolling: notificationService.isPolling
-                });
-              }}
-              className="mt-1 bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-xs block"
-            >
-              Log Status
-            </button>
+        {import.meta.env.DEV && (
+          <div className="fixed bottom-4 left-4 bg-gray-800 text-white p-3 rounded-xl text-xs z-40 shadow-xl">
+            <div className="font-semibold mb-2 flex items-center gap-2">
+              🔧 Debug Panel
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            </div>
+            <div className="space-y-1">
+              <div>Notifications: {isNotificationServiceReady ? '✅' : '⏳'}</div>
+              <div>Toast: {toastNotification ? '📢' : '🔇'}</div>
+              <div>API: {import.meta.env.VITE_API_URL || 'localhost'}</div>
+            </div>
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={() => {
+                  notificationService.addNotification({
+                    title: 'Debug Test',
+                    message: 'Manual test notification from debug panel',
+                    senderName: 'Debug System',
+                    senderEmail: 'debug@test.com',
+                    subject: 'Debug Test Notification'
+                  });
+                }}
+                className="bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded text-xs transition-colors"
+              >
+                Test Alert
+              </button>
+              <button
+                onClick={() => {
+                  console.log('🔍 System Status:', {
+                    isNotificationReady: isNotificationServiceReady,
+                    notifications: notificationService.notifications,
+                    unreadCount: notificationService.getUnreadCount(),
+                    isPolling: notificationService.isPolling,
+                    apiUrl: import.meta.env.VITE_API_URL,
+                    environment: import.meta.env.DEV ? 'development' : 'production'
+                  });
+                }}
+                className="bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-xs transition-colors"
+              >
+                Log Status
+              </button>
+            </div>
           </div>
         )}
       </div>

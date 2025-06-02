@@ -36,6 +36,10 @@ const isValidPosition = (position) => {
 };
 
 const apiService = {
+  // ============================================================================
+  // BANK API ENDPOINTS (Original functionality)
+  // ============================================================================
+  
   // Get list of banks
   getBanks: () => {
     return apiClient.get('/api/banks');
@@ -64,6 +68,53 @@ const apiService = {
     }
 
     return apiClient.post('/api/route_issue', formData);
+  },
+
+  // ============================================================================
+  // SEBI API ENDPOINTS (New functionality)
+  // ============================================================================
+
+  // Get list of SEBI entities with optional filters
+  getSebiEntities: (filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.search) params.append('search', filters.search);
+    if (filters.state) params.append('state', filters.state);
+    if (filters.city) params.append('city', filters.city);
+    
+    const queryString = params.toString();
+    return apiClient.get(`/api/sebi/entities${queryString ? '?' + queryString : ''}`);
+  },
+
+  // Get SEBI issue categories
+  getSebiCategories: () => {
+    return apiClient.get('/api/sebi/categories');
+  },
+
+  // Get list of states from SEBI data
+  getSebiStates: () => {
+    return apiClient.get('/api/sebi/states');
+  },
+
+  // Route SEBI issue
+  routeSebiIssue: (formData) => {
+    if (typeof formData !== 'object') {
+      return Promise.reject({ status: 400, message: 'Invalid request payload' });
+    }
+    return apiClient.post('/api/sebi/route', formData);
+  },
+
+  // ============================================================================
+  // GENERAL API ENDPOINTS
+  // ============================================================================
+
+  // Test API connectivity
+  testConnection: () => {
+    return apiClient.get('/api/test');
+  },
+
+  // Health check
+  healthCheck: () => {
+    return apiClient.get('/health');
   },
 };
 

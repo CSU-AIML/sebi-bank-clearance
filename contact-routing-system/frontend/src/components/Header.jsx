@@ -15,69 +15,179 @@ import {
   Moon,
   Sun,
   Star,
+  Building,
+  FileText,
+  TrendingUp,
 } from 'lucide-react';
 import { NotificationBell } from './NotificationBell';
 
-const NavItem = memo(({ to, label, Icon, isScrolled, onClick, isActive = false }) => (
+const NavItem = memo(({ to, label, Icon, isScrolled, onClick, isActive = false, hasDropdown = false, children }) => (
   <li className="relative group">
-    <Link
-      to={to}
-      onClick={onClick}
-      className={`relative flex items-center gap-2 text-sm font-semibold px-3 lg:px-4 py-2.5 rounded-2xl transition-all duration-300 group overflow-hidden transform hover:scale-105 active:scale-95 ${
-        isActive
-          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25'
-          : isScrolled
-          ? 'text-slate-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:text-blue-700 hover:shadow-md'
-          : 'text-white hover:bg-white/20 backdrop-blur-sm hover:shadow-lg'
-      }`}
-    >
-      {/* Animated background gradient */}
-      <div className={`absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${!isActive ? 'group-hover:animate-pulse' : ''}`} />
-      
-      {/* Icon with rotation on hover */}
-      <div className="relative z-10 transition-transform duration-300 group-hover:rotate-12">
-        <Icon size={16} lg:size={18} className={isActive ? 'drop-shadow-sm' : ''} />
+    {hasDropdown ? (
+      <div className="relative">
+        <button
+          className={`relative flex items-center gap-2 text-sm font-semibold px-3 lg:px-4 py-2.5 rounded-2xl transition-all duration-300 group overflow-hidden transform hover:scale-105 active:scale-95 ${
+            isActive
+              ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25'
+              : isScrolled
+              ? 'text-slate-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:text-blue-700 hover:shadow-md'
+              : 'text-white hover:bg-white/20 backdrop-blur-sm hover:shadow-lg'
+          }`}
+        >
+          {/* Animated background gradient */}
+          <div className={`absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${!isActive ? 'group-hover:animate-pulse' : ''}`} />
+          
+          {/* Icon with rotation on hover */}
+          <div className="relative z-10 transition-transform duration-300 group-hover:rotate-12">
+            <Icon size={16} lg:size={18} className={isActive ? 'drop-shadow-sm' : ''} />
+          </div>
+          
+          <span className="relative z-10 hidden sm:inline">{label}</span>
+          
+          {/* Dropdown arrow */}
+          <ChevronDown size={12} className={`relative z-10 transition-transform duration-300 group-hover:rotate-180 ${
+            isScrolled ? 'text-slate-600' : 'text-white/80'
+          }`} />
+          
+          {/* Active indicator */}
+          {isActive && (
+            <div className="absolute bottom-0 left-1/2 w-1 h-1 bg-white rounded-full transform -translate-x-1/2 animate-pulse" />
+          )}
+          
+          {/* Shimmer effect */}
+          <div className="absolute inset-0 -top-2 -bottom-2 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 group-hover:animate-shimmer transform -skew-x-12 transition-opacity duration-500" />
+        </button>
+        
+        {/* Dropdown Menu */}
+        <div className="absolute left-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 transform translate-y-2 group-hover:translate-y-0">
+          <div className="py-2">
+            {children}
+          </div>
+        </div>
       </div>
-      
-      <span className="relative z-10 hidden sm:inline">{label}</span>
-      
-      {/* Active indicator */}
-      {isActive && (
-        <div className="absolute bottom-0 left-1/2 w-1 h-1 bg-white rounded-full transform -translate-x-1/2 animate-pulse" />
-      )}
-      
-      {/* Shimmer effect */}
-      <div className="absolute inset-0 -top-2 -bottom-2 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 group-hover:animate-shimmer transform -skew-x-12 transition-opacity duration-500" />
-    </Link>
+    ) : (
+      <Link
+        to={to}
+        onClick={onClick}
+        className={`relative flex items-center gap-2 text-sm font-semibold px-3 lg:px-4 py-2.5 rounded-2xl transition-all duration-300 group overflow-hidden transform hover:scale-105 active:scale-95 ${
+          isActive
+            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25'
+            : isScrolled
+            ? 'text-slate-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:text-blue-700 hover:shadow-md'
+            : 'text-white hover:bg-white/20 backdrop-blur-sm hover:shadow-lg'
+        }`}
+      >
+        {/* Animated background gradient */}
+        <div className={`absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${!isActive ? 'group-hover:animate-pulse' : ''}`} />
+        
+        {/* Icon with rotation on hover */}
+        <div className="relative z-10 transition-transform duration-300 group-hover:rotate-12">
+          <Icon size={16} lg:size={18} className={isActive ? 'drop-shadow-sm' : ''} />
+        </div>
+        
+        <span className="relative z-10 hidden sm:inline">{label}</span>
+        
+        {/* Active indicator */}
+        {isActive && (
+          <div className="absolute bottom-0 left-1/2 w-1 h-1 bg-white rounded-full transform -translate-x-1/2 animate-pulse" />
+        )}
+        
+        {/* Shimmer effect */}
+        <div className="absolute inset-0 -top-2 -bottom-2 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 group-hover:animate-shimmer transform -skew-x-12 transition-opacity duration-500" />
+      </Link>
+    )}
   </li>
 ));
 
-const MobileNavItem = memo(({ to, label, Icon, onClick, isActive = false }) => (
-  <li className="overflow-hidden relative group">
-    <Link
-      to={to}
-      onClick={onClick}
-      className={`flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 group transform hover:scale-[1.02] hover:translate-x-2 active:scale-98 ${
-        isActive
-          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25'
-          : 'text-slate-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:text-blue-700 hover:shadow-md'
-      }`}
-    >
-      <div className={`p-2 rounded-xl transition-all duration-300 transform group-hover:rotate-12 ${
-        isActive 
-          ? 'bg-white/20' 
-          : 'bg-gradient-to-br from-blue-100 to-purple-100 group-hover:from-blue-200 group-hover:to-purple-200'
-      }`}>
-        <Icon size={20} className={isActive ? 'text-white' : 'text-blue-600'} />
-      </div>
-      <span className="font-semibold text-base">{label}</span>
-      
-      {/* Arrow indicator */}
-      <div className="absolute right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
-        <ChevronDown size={16} className="rotate-[-90deg]" />
-      </div>
-    </Link>
-  </li>
+const DropdownItem = memo(({ to, label, Icon, description }) => (
+  <Link
+    to={to}
+    className="flex items-center gap-3 px-4 py-3 hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 transition-all duration-200 group"
+  >
+    <div className="p-2 rounded-xl bg-gradient-to-br from-purple-100 to-blue-100 group-hover:from-purple-200 group-hover:to-blue-200 transition-all duration-200">
+      <Icon size={16} className="text-purple-600" />
+    </div>
+    <div className="flex-1">
+      <div className="font-medium text-gray-900 group-hover:text-purple-700 transition-colors">{label}</div>
+      <div className="text-xs text-gray-500">{description}</div>
+    </div>
+  </Link>
+));
+
+const MobileNavItem = memo(({ to, label, Icon, onClick, isActive = false, hasDropdown = false, children }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  if (hasDropdown) {
+    return (
+      <li className="overflow-hidden relative">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={`w-full flex items-center justify-between gap-4 p-4 rounded-2xl transition-all duration-300 group transform hover:scale-[1.02] hover:translate-x-2 active:scale-98 ${
+            isActive
+              ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25'
+              : 'text-slate-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:text-blue-700 hover:shadow-md'
+          }`}
+        >
+          <div className="flex items-center gap-4">
+            <div className={`p-2 rounded-xl transition-all duration-300 transform group-hover:rotate-12 ${
+              isActive 
+                ? 'bg-white/20' 
+                : 'bg-gradient-to-br from-blue-100 to-purple-100 group-hover:from-blue-200 group-hover:to-purple-200'
+            }`}>
+              <Icon size={20} className={isActive ? 'text-white' : 'text-blue-600'} />
+            </div>
+            <span className="font-semibold text-base">{label}</span>
+          </div>
+          <ChevronDown size={16} className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+        
+        {isOpen && (
+          <div className="ml-4 mt-2 space-y-1">
+            {children}
+          </div>
+        )}
+      </li>
+    );
+  }
+  
+  return (
+    <li className="overflow-hidden relative group">
+      <Link
+        to={to}
+        onClick={onClick}
+        className={`flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 group transform hover:scale-[1.02] hover:translate-x-2 active:scale-98 ${
+          isActive
+            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25'
+            : 'text-slate-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:text-blue-700 hover:shadow-md'
+        }`}
+      >
+        <div className={`p-2 rounded-xl transition-all duration-300 transform group-hover:rotate-12 ${
+          isActive 
+            ? 'bg-white/20' 
+            : 'bg-gradient-to-br from-blue-100 to-purple-100 group-hover:from-blue-200 group-hover:to-purple-200'
+        }`}>
+          <Icon size={20} className={isActive ? 'text-white' : 'text-blue-600'} />
+        </div>
+        <span className="font-semibold text-base">{label}</span>
+        
+        {/* Arrow indicator */}
+        <div className="absolute right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+          <ChevronDown size={16} className="rotate-[-90deg]" />
+        </div>
+      </Link>
+    </li>
+  );
+});
+
+const MobileDropdownItem = memo(({ to, label, Icon, onClick }) => (
+  <Link
+    to={to}
+    onClick={onClick}
+    className="flex items-center gap-3 p-3 ml-6 rounded-xl hover:bg-purple-50 transition-colors text-sm"
+  >
+    <Icon size={16} className="text-purple-600" />
+    <span className="text-gray-700">{label}</span>
+  </Link>
 ));
 
 const SearchBar = memo(({ isScrolled }) => (
@@ -119,7 +229,7 @@ const UserAvatar = memo(({ isScrolled }) => (
   </div>
 ));
 
-// Updated Header component with notification integration
+// Updated Header component with SEBI navigation
 const Header = ({ notificationService }) => {
   const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -147,16 +257,39 @@ const Header = ({ notificationService }) => {
     return () => window.removeEventListener('scroll', debouncedHandleScroll);
   }, [handleScroll]);
 
+  // Check if current path is under SEBI section
+  const isSebiActive = location.pathname.startsWith('/sebi');
+
   const navItems = [
     { to: '/', label: 'Dashboard', Icon: BarChart3 },
-    { to: '/contacts', label: 'Contacts', Icon: Users },
-    { to: '/settings', label: 'Settings', Icon: Settings }, // Added settings route
+    { to: '/contacts', label: 'Bank Contacts', Icon: Users },
+    { 
+      label: 'SEBI Services', 
+      Icon: TrendingUp, 
+      hasDropdown: true,
+      isActive: isSebiActive,
+      children: [
+        { to: '/sebi/directory', label: 'Entity Directory', Icon: Building, description: 'Browse registered entities' },
+        { to: '/sebi/routing', label: 'Issue Routing', Icon: FileText, description: 'Route SEBI concerns' }
+      ]
+    },
+    { to: '/settings', label: 'Settings', Icon: Settings },
   ];
 
-  // Mobile nav items - matching your actual routes
+  // Mobile nav items
   const mobileNavItems = [
     { to: '/', label: 'Dashboard', Icon: BarChart3 },
-    { to: '/contacts', label: 'Contacts', Icon: Users },
+    { to: '/contacts', label: 'Bank Contacts', Icon: Users },
+    { 
+      label: 'SEBI Services', 
+      Icon: TrendingUp, 
+      hasDropdown: true,
+      isActive: isSebiActive,
+      children: [
+        { to: '/sebi/directory', label: 'Entity Directory', Icon: Building },
+        { to: '/sebi/routing', label: 'Issue Routing', Icon: FileText }
+      ]
+    },
     { to: '/settings', label: 'Settings', Icon: Settings },
   ];
 
@@ -289,16 +422,27 @@ const Header = ({ notificationService }) => {
           {/* Enhanced Navigation */}
           <nav className="hidden md:flex items-center gap-2" aria-label="Main navigation">
             <ul className="flex gap-1">
-              {navItems.map(({ to, label, Icon }) => (
+              {navItems.map((item) => (
                 <NavItem 
-                  key={label} 
-                  to={to} 
-                  label={label} 
-                  Icon={Icon} 
+                  key={item.label} 
+                  to={item.to} 
+                  label={item.label} 
+                  Icon={item.Icon} 
                   isScrolled={isScrolled}
-                  isActive={location.pathname === to}
+                  isActive={item.hasDropdown ? item.isActive : location.pathname === item.to}
+                  hasDropdown={item.hasDropdown}
                   onClick={() => {}}
-                />
+                >
+                  {item.children && item.children.map((child) => (
+                    <DropdownItem
+                      key={child.to}
+                      to={child.to}
+                      label={child.label}
+                      Icon={child.Icon}
+                      description={child.description}
+                    />
+                  ))}
+                </NavItem>
               ))}
             </ul>
           </nav>
@@ -308,7 +452,7 @@ const Header = ({ notificationService }) => {
             {/* Search Bar */}
             <SearchBar isScrolled={isScrolled} />
             
-            {/* Notifications - Updated with notification service */}
+            {/* Notifications */}
             <div className="hidden sm:block">
               {notificationService ? (
                 <NotificationBell 
@@ -316,7 +460,6 @@ const Header = ({ notificationService }) => {
                   isScrolled={isScrolled} 
                 />
               ) : (
-                // Fallback loading state
                 <div className={`p-2 md:p-2.5 rounded-2xl animate-pulse ${
                   isScrolled 
                     ? 'bg-slate-100' 
@@ -327,7 +470,7 @@ const Header = ({ notificationService }) => {
               )}
             </div>
             
-            {/* User Avatar - Hidden on mobile to save space */}
+            {/* User Avatar */}
             <div className="hidden sm:block">
               <UserAvatar isScrolled={isScrolled} />
             </div>
@@ -388,9 +531,9 @@ const Header = ({ notificationService }) => {
 
             {/* Mobile Navigation */}
             <ul className="space-y-3 mb-6 sm:mb-8">
-              {mobileNavItems.map(({ to, label, Icon }, index) => (
+              {mobileNavItems.map((item, index) => (
                 <div
-                  key={label}
+                  key={item.label}
                   className="transition-all duration-300"
                   style={{
                     animationDelay: `${index * 100}ms`,
@@ -398,12 +541,23 @@ const Header = ({ notificationService }) => {
                   }}
                 >
                   <MobileNavItem 
-                    to={to} 
-                    label={label} 
-                    Icon={Icon} 
+                    to={item.to} 
+                    label={item.label} 
+                    Icon={item.Icon} 
                     onClick={() => setIsMobileMenuOpen(false)}
-                    isActive={location.pathname === to}
-                  />
+                    isActive={item.hasDropdown ? item.isActive : location.pathname === item.to}
+                    hasDropdown={item.hasDropdown}
+                  >
+                    {item.children && item.children.map((child) => (
+                      <MobileDropdownItem
+                        key={child.to}
+                        to={child.to}
+                        label={child.label}
+                        Icon={child.Icon}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      />
+                    ))}
+                  </MobileNavItem>
                 </div>
               ))}
               
