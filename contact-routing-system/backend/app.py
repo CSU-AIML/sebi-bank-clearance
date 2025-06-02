@@ -9,7 +9,12 @@ from logging.handlers import RotatingFileHandler
 
 # Configure app
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=[
+    "http://localhost:3000",  # For local development
+    "http://localhost:5173",  # Vite default port
+    "https://bankclearancee.onrender.com",  # Replace with your actual frontend URL
+    "https://*.onrender.com"  # Allow all Render subdomains
+])
 
 # Configure logging
 if not os.path.exists('logs'):
