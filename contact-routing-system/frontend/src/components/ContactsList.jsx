@@ -19,7 +19,7 @@ function ContactsList({ contacts, isFirstPage = false, allContacts = [] }) {
   const [hoveredIndex, setHoveredIndex] = useState(null);
 
   // Available contact persons
-  const contactPersons = ["Person 1", "Person 2", "Person 3"];
+  const contactPersons = ["Zainab", "Zinat", "Payal", "Farid"];
 
   // Generate unique ID for each contact
   const getContactId = (contact) => `${contact.bank_id}-${contact.position_type}-${contact.name}`;
