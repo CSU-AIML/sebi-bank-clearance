@@ -450,8 +450,8 @@ const Header = ({ notificationService }) => {
           {/* Enhanced Right Section */}
           <div className="flex items-center gap-2 md:gap-3">
             {/* Search Bar */}
-            <SearchBar isScrolled={isScrolled} />
-            
+            {/* <SearchBar isScrolled={isScrolled} />
+             */}
             {/* Notifications */}
             <div className="hidden sm:block">
               {notificationService ? (
@@ -471,9 +471,9 @@ const Header = ({ notificationService }) => {
             </div>
             
             {/* User Avatar */}
-            <div className="hidden sm:block">
+            {/* <div className="hidden sm:block">
               <UserAvatar isScrolled={isScrolled} />
-            </div>
+            </div> */}
 
             {/* Enhanced Mobile Menu Button */}
             <button
@@ -562,7 +562,7 @@ const Header = ({ notificationService }) => {
               ))}
               
               {/* Mobile Notification Bell */}
-              <div className="sm:hidden pt-3 border-t border-gray-200 mt-6">
+              {/* <div className="sm:hidden pt-3 border-t border-gray-200 mt-6">
                 <div className="p-3 bg-gray-50 rounded-xl">
                   <h4 className="font-medium text-gray-800 mb-2 flex items-center gap-2">
                     <Bell size={16} className="text-blue-600" />
@@ -574,7 +574,7 @@ const Header = ({ notificationService }) => {
                     </div>
                   )}
                 </div>
-              </div>
+              </div> */}
             </ul>
 
             {/* Mobile Footer */}

@@ -253,51 +253,7 @@ function App() {
           </div>
         </footer>
 
-        {/* Debug Panel for Development */}
-        {import.meta.env.DEV && (
-          <div className="fixed bottom-4 left-4 bg-gray-800 text-white p-3 rounded-xl text-xs z-40 shadow-xl">
-            <div className="font-semibold mb-2 flex items-center gap-2">
-              🔧 Debug Panel
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            </div>
-            <div className="space-y-1">
-              <div>Notifications: {isNotificationServiceReady ? '✅' : '⏳'}</div>
-              <div>Toast: {toastNotification ? '📢' : '🔇'}</div>
-              <div>API: {import.meta.env.VITE_API_URL || 'localhost'}</div>
-            </div>
-            <div className="flex gap-2 mt-3">
-              <button
-                onClick={() => {
-                  notificationService.addNotification({
-                    title: 'Debug Test',
-                    message: 'Manual test notification from debug panel',
-                    senderName: 'Debug System',
-                    senderEmail: 'debug@test.com',
-                    subject: 'Debug Test Notification'
-                  });
-                }}
-                className="bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded text-xs transition-colors"
-              >
-                Test Alert
-              </button>
-              <button
-                onClick={() => {
-                  console.log('🔍 System Status:', {
-                    isNotificationReady: isNotificationServiceReady,
-                    notifications: notificationService.notifications,
-                    unreadCount: notificationService.getUnreadCount(),
-                    isPolling: notificationService.isPolling,
-                    apiUrl: import.meta.env.VITE_API_URL,
-                    environment: import.meta.env.DEV ? 'development' : 'production'
-                  });
-                }}
-                className="bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-xs transition-colors"
-              >
-                Log Status
-              </button>
-            </div>
-          </div>
-        )}
+        
       </div>
     </Router>
   );

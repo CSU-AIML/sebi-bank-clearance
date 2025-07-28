@@ -374,6 +374,7 @@ X = pd.concat([
 
 
 y = issue_with_features['Escalation_Level']
+# Ensure all features are numeric
 
 # Train the model
 print("\nTraining the model...")
@@ -387,6 +388,14 @@ numerical_cols = ['Time_Sensitivity', 'Complete_Levels_Count', 'Generic_Email_Co
 
 X_train[numerical_cols] = scaler.fit_transform(X_train[numerical_cols])
 X_test[numerical_cols] = scaler.transform(X_test[numerical_cols])
+X_train = X_train.apply(pd.to_numeric, errors='coerce')
+X_test = X_test.apply(pd.to_numeric, errors='coerce')
+
+# Optional: Check for any remaining NaNs
+if X_train.isnull().any().any() or X_test.isnull().any().any():
+    print("Warning: NaNs found after type conversion. Filling with 0.")
+    X_train = X_train.fillna(0)
+    X_test = X_test.fillna(0)
 
 # Train Random Forest model
 rf_model = RandomForestClassifier(n_estimators=100, random_state=42)

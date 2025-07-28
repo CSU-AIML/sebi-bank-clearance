@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, MapPin, Phone, Mail, Building, X, ExternalLink, Star, Send, Clock, CheckCircle2, User, CheckCircle } from 'lucide-react';
+// Removed Framer Motion imports that might cause scroll issues
+// import { AnimatePresence, motion } from "motion/react";
 import EmailTemplate from '../components/EmailTemplate';
 
 // Add SEBI API service functions
@@ -68,11 +70,58 @@ const SebiDirectory = () => {
   const [itemsPerPage] = useState(9);
   const [filteredEntities, setFilteredEntities] = useState([]);
 
+  // Enhanced ContactsList features
+  const [contactStatus, setContactStatus] = useState({});
+  const [editingNotes, setEditingNotes] = useState({});
+  const [tempNotes, setTempNotes] = useState({});
+  const [showContactDropdown, setShowContactDropdown] = useState({});
+  // Removed hoveredIndex state that might cause scroll issues
+  // const [hoveredIndex, setHoveredIndex] = useState(null);
+
+  // Available contact persons
+  const contactPersons = ["Zainab", "Zinat", "Payal", "Farid"];
+
+  // Generate unique ID for each entity
+  const getEntityId = (entity) => `sebi-${entity.sebi_id}`;
+
   useEffect(() => {
     loadInitialData();
     loadContactedEntities();
     loadContactHistory();
     loadSelectedEntities();
+    loadContactStatus();
+  }, []);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Check if click is outside any dropdown
+      if (!event.target.closest('.dropdown-container')) {
+        setShowContactDropdown({});
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Fix scroll behavior
+  useEffect(() => {
+    // Prevent any unwanted scroll behavior
+    const preventAutoScroll = (e) => {
+      // Allow normal scrolling
+      return true;
+    };
+
+    // Ensure smooth scrolling is enabled
+    document.documentElement.style.scrollBehavior = 'auto';
+    
+    return () => {
+      // Cleanup
+      document.documentElement.style.scrollBehavior = '';
+    };
   }, []);
 
   // Update filtered entities when entities or filters change
@@ -84,6 +133,27 @@ const SebiDirectory = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [filters]);
+
+  // Load contact status from localStorage
+  const loadContactStatus = () => {
+    try {
+      const stored = localStorage.getItem('sebiContactStatus');
+      if (stored) {
+        setContactStatus(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Error loading contact status:', error);
+    }
+  };
+
+  // Save contact status to localStorage
+  const saveContactStatus = (status) => {
+    try {
+      localStorage.setItem('sebiContactStatus', JSON.stringify(status));
+    } catch (error) {
+      console.error('Error saving contact status:', error);
+    }
+  };
 
   // Load contact history from localStorage
   const loadContactHistory = () => {
@@ -129,6 +199,112 @@ const SebiDirectory = () => {
     }
   };
 
+  // Reset all contact data
+  const handleResetAllContacts = () => {
+    if (window.confirm('Are you sure you want to reset all contact data? This will clear:\n• Contact status\n• Notes\n• Email sent status\n• Contacted status\n\nThis action cannot be undone.')) {
+      setContactStatus({});
+      setEditingNotes({});
+      setTempNotes({});
+      setShowContactDropdown({});
+      setContactedEntities(new Set());
+      setContactHistory(new Map());
+      
+      // Clear localStorage
+      localStorage.removeItem('sebiContactStatus');
+      localStorage.removeItem('contactedSebiEntities');
+      localStorage.removeItem('sebiContactHistory');
+      
+      saveContactStatus({});
+      saveContactedEntities(new Set());
+      saveContactHistory(new Map());
+    }
+  };
+
+  // Toggle contacted status with person selection
+  const toggleContacted = (entityId, contactedBy = null) => {
+    const currentStatus = contactStatus[entityId];
+    
+    if (currentStatus?.contacted) {
+      // If already contacted, toggle off
+      const newStatus = {
+        ...contactStatus,
+        [entityId]: {
+          ...currentStatus,
+          contacted: false,
+          contactedAt: null,
+          contactedBy: null
+        }
+      };
+      setContactStatus(newStatus);
+      saveContactStatus(newStatus);
+      setShowContactDropdown(prev => ({ ...prev, [entityId]: false }));
+      
+      // Remove from contacted entities set
+      const newContactedEntities = new Set(contactedEntities);
+      newContactedEntities.delete(entityId);
+      setContactedEntities(newContactedEntities);
+      saveContactedEntities(newContactedEntities);
+    } else {
+      if (contactedBy) {
+        // If person is selected, mark as contacted
+        const newStatus = {
+          ...contactStatus,
+          [entityId]: {
+            ...currentStatus,
+            contacted: true,
+            contactedAt: new Date().toISOString(),
+            contactedBy: contactedBy
+          }
+        };
+        setContactStatus(newStatus);
+        saveContactStatus(newStatus);
+        setShowContactDropdown({});
+        
+        // Add to contacted entities set
+        const newContactedEntities = new Set(contactedEntities);
+        newContactedEntities.add(entityId);
+        setContactedEntities(newContactedEntities);
+        saveContactedEntities(newContactedEntities);
+      } else {
+        // Close all other dropdowns and show only this one
+        setShowContactDropdown({ [entityId]: true });
+      }
+    }
+  };
+
+  // Handle contact person selection
+  const selectContactPerson = (entityId, person) => {
+    toggleContacted(entityId, person);
+  };
+
+  // Handle notes editing
+  const startEditingNotes = (entityId) => {
+    setEditingNotes(prev => ({ ...prev, [entityId]: true }));
+    setTempNotes(prev => ({ 
+      ...prev, 
+      [entityId]: contactStatus[entityId]?.notes || '' 
+    }));
+  };
+
+  const saveNotes = (entityId) => {
+    const newStatus = {
+      ...contactStatus,
+      [entityId]: {
+        ...contactStatus[entityId],
+        notes: tempNotes[entityId],
+        notesUpdatedAt: new Date().toISOString()
+      }
+    };
+    setContactStatus(newStatus);
+    saveContactStatus(newStatus);
+    setEditingNotes(prev => ({ ...prev, [entityId]: false }));
+  };
+
+  const cancelEditingNotes = (entityId) => {
+    setEditingNotes(prev => ({ ...prev, [entityId]: false }));
+    setTempNotes(prev => ({ ...prev, [entityId]: '' }));
+  };
+
   // Toggle entity selection
   const toggleEntitySelection = (entityId) => {
     const newSelected = new Set(selectedEntities);
@@ -144,7 +320,7 @@ const SebiDirectory = () => {
 
   // Select all visible entities
   const selectAllVisible = () => {
-    const visibleIds = getCurrentPageEntities().map(e => e.sebi_id);
+    const visibleIds = getCurrentPageEntities().map(e => getEntityId(e));
     const newSelected = new Set([...selectedEntities, ...visibleIds]);
     setSelectedEntities(newSelected);
     saveSelectedEntities(newSelected);
@@ -219,11 +395,7 @@ const SebiDirectory = () => {
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
-      // Scroll to top of results
-      document.getElementById('results-section')?.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'start' 
-      });
+      // Removed auto-scroll to prevent unwanted scrolling behavior
     }
   };
 
@@ -250,15 +422,30 @@ const SebiDirectory = () => {
 
   // Handle email sending
   const handleEmailSent = (contact, emailData) => {
+    const entityId = getEntityId({ sebi_id: contact.sebi_id || contact.id });
+    
+    // Update contact status to include email sent info
+    const newStatus = {
+      ...contactStatus,
+      [entityId]: {
+        ...contactStatus[entityId],
+        emailSent: true,
+        lastEmailSentAt: new Date().toISOString(),
+        lastEmailSubject: emailData.subject
+      }
+    };
+    setContactStatus(newStatus);
+    saveContactStatus(newStatus);
+    
     const newContactedEntities = new Set(contactedEntities);
-    newContactedEntities.add(contact.sebi_id || contact.id);
+    newContactedEntities.add(entityId);
     setContactedEntities(newContactedEntities);
     saveContactedEntities(newContactedEntities);
     
     // Update contact history
     const newHistory = new Map(contactHistory);
     const currentUser = 'Current User'; // You can replace this with actual user name
-    newHistory.set(contact.sebi_id || contact.id, {
+    newHistory.set(entityId, {
       contactedBy: currentUser,
       contactedAt: new Date().toISOString(),
       method: 'Email',
@@ -303,11 +490,12 @@ const SebiDirectory = () => {
 
   // Get contact status
   const getContactStatus = (entity) => {
+    const entityId = getEntityId(entity);
     if (!entity.primary_contact?.email && !entity.secondary_contact?.email) {
       return { status: 'no-email', text: 'No Email', color: 'gray' };
     }
     
-    if (isContactContacted(entity.sebi_id)) {
+    if (isContactContacted(entityId)) {
       return { status: 'contacted', text: 'Contacted', color: 'green' };
     }
     
@@ -374,6 +562,25 @@ const SebiDirectory = () => {
     setCurrentPage(1);
     loadInitialData();
   };
+
+  // Enhanced Stats calculation
+  const dataToAnalyze = filteredEntities;
+  const totalEntities = dataToAnalyze.length;
+  const contactedCount = dataToAnalyze.filter(entity => 
+    contactStatus[getEntityId(entity)]?.contacted
+  ).length;
+  const emailSentCount = dataToAnalyze.filter(entity => 
+    contactStatus[getEntityId(entity)]?.emailSent
+  ).length;
+  const remainingCount = totalEntities - contactedCount;
+
+  // Person-specific statistics
+  const personStats = contactPersons.map(person => {
+    const personContactedCount = dataToAnalyze.filter(entity => 
+      contactStatus[getEntityId(entity)]?.contactedBy === person
+    ).length;
+    return { person, count: personContactedCount };
+  });
 
   // Pagination Component
   const Pagination = () => {
@@ -490,34 +697,125 @@ const SebiDirectory = () => {
     }
   };
 
-  const EntityCard = ({ entity }) => {
-    const contactStatus = getContactStatus(entity);
+  const EntityCard = ({ entity, index }) => {
+    const entityId = getEntityId(entity);
+    const contactStatusEntity = getContactStatus(entity);
     const hasEmail = entity.primary_contact?.email || entity.secondary_contact?.email;
-    const isSelected = selectedEntities.has(entity.sebi_id);
-    const contactInfo = contactHistory.get(entity.sebi_id);
+    const isSelected = selectedEntities.has(entityId);
+    const contactInfo = contactHistory.get(entityId);
+    const status = contactStatus[entityId];
+    const isContacted = status?.contacted || false;
+    const isEditingNote = editingNotes[entityId] || false;
+    const showDropdown = showContactDropdown[entityId] || false;
+    const hasEmailSent = status?.emailSent || false;
     
     return (
-      <div className={`bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 hover:border-purple-200 group relative ${
-        isSelected ? 'border-purple-500 bg-purple-50' : ''
-      }`}>
-        {/* Selection Checkbox */}
-        <div className="absolute top-4 left-4 z-10">
-          <input
-            type="checkbox"
-            checked={isSelected}
-            onChange={(e) => {
-              e.stopPropagation();
-              toggleEntitySelection(entity.sebi_id);
-            }}
-            className="w-5 h-5 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 focus:ring-2 cursor-pointer"
-          />
-        </div>
+      <div 
+        key={entityId}
+        className="relative group block p-2 h-full w-full"
+        // Removed hover effects that might cause scroll issues
+      >
+        {/* Removed AnimatePresence and motion components that might interfere with scroll */}
+        
+        <div className={`relative z-20 bg-white/70 backdrop-blur-sm p-4 rounded-lg shadow-lg border border-white/30 group-hover:bg-white/80 group-hover:border-white/50 transition-all duration-200 h-full ${
+          isSelected ? 'border-purple-500 bg-purple-50' : ''
+        } ${isContacted ? '!border-l-4 !border-l-green-500' : ''}`}>
+          
+          {/* Selection Checkbox */}
+          <div className="absolute top-4 left-4 z-10">
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={(e) => {
+                e.stopPropagation();
+                toggleEntitySelection(entityId);
+              }}
+              className="w-5 h-5 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 focus:ring-2 cursor-pointer"
+            />
+          </div>
 
-        <div className="flex justify-between items-start mb-4 ml-8">
-          <div className="flex-1">
-            <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-purple-700 transition-colors line-clamp-2">
-              {entity.name}
-            </h3>
+          {/* Contact Status Indicator - Fixed positioning and click area */}
+          <div className="absolute top-3 right-3 z-40 flex gap-1.5">
+            {/* Email Button */}
+            {hasEmail && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  openEmailModal(entity);
+                }}
+                className={`p-2 rounded-full transition-all duration-200 shadow-sm ${
+                  hasEmailSent 
+                    ? 'bg-blue-100 text-blue-600 hover:bg-blue-200 border-2 border-blue-300' 
+                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200 border-2 border-gray-300 hover:text-blue-500'
+                }`}
+                title={hasEmailSent ? 'Email sent' : 'Send email'}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </button>
+            )}
+            
+            {/* Contact Status Button */}
+            <div className="relative dropdown-container">
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleContacted(entityId);
+                }}
+                className={`p-2 rounded-full transition-all duration-200 shadow-sm ${
+                  isContacted 
+                    ? 'bg-green-100 text-green-600 hover:bg-green-200 border-2 border-green-300' 
+                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200 border-2 border-gray-300'
+                }`}
+                title={isContacted ? 'Mark as not contacted' : 'Mark as contacted'}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </button>
+              
+              {/* Contact Person Dropdown */}
+              {showDropdown && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-30" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setShowContactDropdown({});
+                    }}
+                  />
+                  <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-50 min-w-[140px] overflow-hidden">
+                    <div className="py-1">
+                      <div className="px-4 py-2 text-xs font-semibold text-gray-500 bg-gray-50 border-b border-gray-100">
+                        Contacted by:
+                      </div>
+                      {contactPersons.map((person) => (
+                        <button
+                          key={person}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            selectContactPerson(entityId, person);
+                          }}
+                          className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150"
+                        >
+                          {person}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Entity Information */}
+          <div className="relative z-10 pr-24 ml-8">
+            <h3 className="font-semibold text-lg text-gray-800 mb-1 leading-tight">{entity.name}</h3>
             <div className="flex items-center gap-2 mb-2 flex-wrap">
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                 {entity.registration_no}
@@ -529,16 +827,16 @@ const SebiDirectory = () => {
               
               {/* Contact Status Badge */}
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                contactStatus.status === 'contacted' 
+                contactStatusEntity.status === 'contacted' 
                   ? 'bg-green-100 text-green-800'
-                  : contactStatus.status === 'no-email'
+                  : contactStatusEntity.status === 'no-email'
                   ? 'bg-gray-100 text-gray-600'
                   : 'bg-blue-100 text-blue-800'
               }`}>
-                {contactStatus.status === 'contacted' && <CheckCircle2 size={12} className="mr-1" />}
-                {contactStatus.status === 'no-email' && <X size={12} className="mr-1" />}
-                {contactStatus.status === 'not-contacted' && <Clock size={12} className="mr-1" />}
-                {contactStatus.text}
+                {contactStatusEntity.status === 'contacted' && <CheckCircle2 size={12} className="mr-1" />}
+                {contactStatusEntity.status === 'no-email' && <X size={12} className="mr-1" />}
+                {contactStatusEntity.status === 'not-contacted' && <Clock size={12} className="mr-1" />}
+                {contactStatusEntity.text}
               </span>
             </div>
             
@@ -563,95 +861,199 @@ const SebiDirectory = () => {
                 )}
               </div>
             )}
-          </div>
-          
-          <button
-            onClick={() => setSelectedEntity(entity)}
-            className="ml-4 p-2 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-600 transition-colors"
-            title="View Details"
-          >
-            <ExternalLink size={18} />
-          </button>
-        </div>
-        
-        {/* Primary Contact Preview */}
-        {entity.primary_contact && (
-          <div className="space-y-2">
-            {entity.primary_contact.address && (
-              <div className="flex items-start gap-2 text-sm text-gray-600">
-                <MapPin size={14} className="mt-0.5 text-gray-400 flex-shrink-0" />
-                <span className="line-clamp-2">
-                  {entity.primary_contact.address}
-                  {entity.primary_contact.city && `, ${entity.primary_contact.city}`}
-                  {entity.primary_contact.state && `, ${entity.primary_contact.state}`}
-                </span>
+
+            {/* Contact Details */}
+            <div className="space-y-2">
+              {entity.primary_contact?.email && (
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <a 
+                    href={`mailto:${entity.primary_contact.email}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-blue-500 hover:text-blue-700 hover:underline text-sm transition-colors duration-150 break-all"
+                  >
+                    {entity.primary_contact.email}
+                  </a>
+                </div>
+              )}
+              {entity.primary_contact?.telephone && (
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                  <a 
+                    href={`tel:${entity.primary_contact.telephone}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-blue-500 hover:text-blue-700 hover:underline text-sm transition-colors duration-150"
+                  >
+                    {entity.primary_contact.telephone}
+                  </a>
+                </div>
+              )}
+            </div>
+
+            {/* Email Status Info */}
+            {hasEmailSent && status?.lastEmailSentAt && (
+              <div className="mt-3 px-3 py-1.5 bg-blue-50 rounded-md border border-blue-200">
+                <div className="text-xs text-blue-700 font-medium">
+                  ✉ Email sent on {new Date(status.lastEmailSentAt).toLocaleDateString()}
+                  {status.lastEmailSubject && (
+                    <span className="block text-blue-600 mt-0.5 truncate">
+                      Subject: {status.lastEmailSubject}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Contact Status Info */}
+            {isContacted && status?.contactedAt && (
+              <div className="mt-3 px-3 py-1.5 bg-green-50 rounded-md border border-green-200">
+                <div className="text-xs text-green-700 font-medium">
+                  ✓ Contacted on {new Date(status.contactedAt).toLocaleDateString()}
+                  {status.contactedBy && (
+                    <span className="block text-green-600 mt-0.5">by {status.contactedBy}</span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Notes Section */}
+            <div className="mt-4 border-t border-gray-200 pt-3">
+              {isEditingNote ? (
+                <div className="space-y-3">
+                  <textarea
+                    className="w-full p-3 border border-gray-300 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                    rows="3"
+                    placeholder="Add notes about your conversation..."
+                    value={tempNotes[entityId] || ''}
+                    onChange={(e) => setTempNotes(prev => ({ ...prev, [entityId]: e.target.value }))}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        saveNotes(entityId);
+                      }}
+                      className="px-4 py-1.5 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition-colors duration-200 font-medium"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        cancelEditingNotes(entityId);
+                      }}
+                      className="px-4 py-1.5 bg-gray-200 text-gray-700 text-sm rounded-md hover:bg-gray-300 transition-colors duration-200 font-medium"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  {status?.notes ? (
+                    <div className="space-y-2">
+                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{status.notes}</p>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          startEditingNotes(entityId);
+                        }}
+                        className="text-blue-500 text-sm hover:text-blue-700 transition-colors duration-150 flex items-center gap-1.5 font-medium"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Edit notes
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        startEditingNotes(entityId);
+                      }}
+                      className="text-blue-500 text-sm hover:text-blue-700 transition-colors duration-150 flex items-center gap-1.5 font-medium"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Add notes
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Primary Contact Preview */}
+            {entity.primary_contact && entity.primary_contact.address && (
+              <div className="mt-3 pt-3 border-t border-gray-200">
+                <div className="flex items-start gap-2 text-sm text-gray-600">
+                  <MapPin size={14} className="mt-0.5 text-gray-400 flex-shrink-0" />
+                  <span className="line-clamp-2">
+                    {entity.primary_contact.address}
+                    {entity.primary_contact.city && `, ${entity.primary_contact.city}`}
+                    {entity.primary_contact.state && `, ${entity.primary_contact.state}`}
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-between pt-2">
+                  <div className="flex gap-3">
+                    {entity.primary_contact.email && (
+                      <a
+                        href={`mailto:${entity.primary_contact.email}`}
+                        className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 transition-colors"
+                      >
+                        <Mail size={12} />
+                        Email
+                      </a>
+                    )}
+                    {entity.primary_contact.telephone && (
+                      <a
+                        href={`tel:${entity.primary_contact.telephone}`}
+                        className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 transition-colors"
+                      >
+                        <Phone size={12} />
+                        Call
+                      </a>
+                    )}
+                  </div>
+                  
+                  <button
+                    onClick={() => setSelectedEntity(entity)}
+                    className="text-xs text-purple-600 hover:text-purple-800 font-medium transition-colors"
+                  >
+                    View Details →
+                  </button>
+                </div>
               </div>
             )}
             
-            <div className="flex items-center justify-between pt-2">
-              <div className="flex gap-3">
-                {entity.primary_contact.email && (
-                  <a
-                    href={`mailto:${entity.primary_contact.email}`}
-                    className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 transition-colors"
-                  >
-                    <Mail size={12} />
-                    Email
-                  </a>
-                )}
-                {entity.primary_contact.telephone && (
-                  <a
-                    href={`tel:${entity.primary_contact.telephone}`}
-                    className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 transition-colors"
-                  >
-                    <Phone size={12} />
-                    Call
-                  </a>
-                )}
+            {/* No contact info message */}
+            {!entity.primary_contact?.address && !entity.primary_contact?.email && (
+              <div className="text-center py-4 text-gray-500">
+                <Building size={24} className="mx-auto mb-2 text-gray-300" />
+                <p className="text-sm">Contact information not available</p>
               </div>
-              
-              <div className="flex items-center gap-2">
-                {/* Email Action Button */}
-                {hasEmail && (
-                  <button
-                    onClick={() => openEmailModal(entity)}
-                    disabled={contactStatus.status === 'contacted'}
-                    className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all transform hover:scale-105 ${
-                      contactStatus.status === 'contacted'
-                        ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-                        : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 shadow-sm'
-                    }`}
-                    title={contactStatus.status === 'contacted' ? 'Already contacted' : 'Send email'}
-                  >
-                    <Send size={12} />
-                    {contactStatus.status === 'contacted' ? 'Sent' : 'Email'}
-                  </button>
-                )}
-                
-                <button
-                  onClick={() => setSelectedEntity(entity)}
-                  className="text-xs text-purple-600 hover:text-purple-800 font-medium transition-colors"
-                >
-                  View Details →
-                </button>
-              </div>
-            </div>
+            )}
           </div>
-        )}
-        
-        {/* No contact info message */}
-        {!entity.primary_contact?.address && !entity.primary_contact?.email && (
-          <div className="text-center py-4 text-gray-500">
-            <Building size={24} className="mx-auto mb-2 text-gray-300" />
-            <p className="text-sm">Contact information not available</p>
-          </div>
-        )}
+        </div>
       </div>
     );
   };
 
   const EntityModal = ({ entity, onClose }) => {
-    const contactStatus = getContactStatus(entity);
+    const contactStatusEntity = getContactStatus(entity);
     const hasEmail = entity.primary_contact?.email || entity.secondary_contact?.email;
     
     return (
@@ -666,16 +1068,16 @@ const SebiDirectory = () => {
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <p className="text-sm text-gray-600">Registration: {entity.registration_no}</p>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    contactStatus.status === 'contacted' 
+                    contactStatusEntity.status === 'contacted' 
                       ? 'bg-green-100 text-green-800'
-                      : contactStatus.status === 'no-email'
+                      : contactStatusEntity.status === 'no-email'
                       ? 'bg-gray-100 text-gray-600'
                       : 'bg-blue-100 text-blue-800'
                   }`}>
-                    {contactStatus.status === 'contacted' && <CheckCircle2 size={12} className="mr-1" />}
-                    {contactStatus.status === 'no-email' && <X size={12} className="mr-1" />}
-                    {contactStatus.status === 'not-contacted' && <Clock size={12} className="mr-1" />}
-                    {contactStatus.text}
+                    {contactStatusEntity.status === 'contacted' && <CheckCircle2 size={12} className="mr-1" />}
+                    {contactStatusEntity.status === 'no-email' && <X size={12} className="mr-1" />}
+                    {contactStatusEntity.status === 'not-contacted' && <Clock size={12} className="mr-1" />}
+                    {contactStatusEntity.text}
                   </span>
                 </div>
               </div>
@@ -687,16 +1089,16 @@ const SebiDirectory = () => {
                       openEmailModal(entity);
                       onClose();
                     }}
-                    disabled={contactStatus.status === 'contacted'}
+                    disabled={contactStatusEntity.status === 'contacted'}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all transform hover:scale-105 ${
-                      contactStatus.status === 'contacted'
+                      contactStatusEntity.status === 'contacted'
                         ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
                         : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 shadow-lg'
                     }`}
-                    title={contactStatus.status === 'contacted' ? 'Already contacted' : 'Send email'}
+                    title={contactStatusEntity.status === 'contacted' ? 'Already contacted' : 'Send email'}
                   >
                     <Send size={16} />
-                    {contactStatus.status === 'contacted' ? 'Email Sent' : 'Send Email'}
+                    {contactStatusEntity.status === 'contacted' ? 'Email Sent' : 'Send Email'}
                   </button>
                 )}
                 <button
@@ -807,12 +1209,12 @@ const SebiDirectory = () => {
                   Email Campaign Status
                 </h4>
                 <p className="text-sm text-purple-800">
-                  {contactStatus.status === 'contacted' 
+                  {contactStatusEntity.status === 'contacted' 
                     ? '✅ This entity has been contacted via email campaign.'
                     : '📧 This entity is available for email outreach.'
                   }
                 </p>
-                {contactStatus.status === 'not-contacted' && (
+                {contactStatusEntity.status === 'not-contacted' && (
                   <p className="text-xs text-purple-600 mt-1">
                     Click "Send Email" to start the conversation with pre-designed templates.
                   </p>
@@ -826,7 +1228,7 @@ const SebiDirectory = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50" style={{ overflowX: 'hidden', overflowY: 'auto' }}>
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 border border-purple-100">
@@ -847,7 +1249,7 @@ const SebiDirectory = () => {
                 <div className="text-xs text-blue-600">With Email</div>
               </div>
               <div className="text-center p-4 bg-green-50 rounded-xl">
-                <div className="text-2xl font-bold text-green-600">{contactedEntities.size}</div>
+                <div className="text-2xl font-bold text-green-600">{contactedCount}</div>
                 <div className="text-xs text-green-600">Contacted</div>
               </div>
             </div>
@@ -925,16 +1327,11 @@ const SebiDirectory = () => {
                 {/* Contact Status Filters */}
                 <button
                   onClick={() => {
-                    // Filter to show only contacted entities
-                    const contactedIds = Array.from(contactedEntities);
-                    if (contactedIds.length > 0) {
-                      // This would need additional logic to filter by contacted status
-                      alert(`${contactedIds.length} entities have been contacted`);
-                    }
+                    alert(`${contactedCount} entities have been contacted`);
                   }}
                   className="px-3 py-1 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
                 >
-                  ✅ Contacted ({contactedEntities.size})
+                  ✅ Contacted ({contactedCount})
                 </button>
               </div>
             </div>
@@ -1027,7 +1424,7 @@ const SebiDirectory = () => {
                 <button
                   onClick={() => {
                     const selectedWithEmail = Array.from(selectedEntities)
-                      .map(id => entities.find(e => e.sebi_id === id))
+                      .map(id => entities.find(e => getEntityId(e) === id))
                       .filter(e => e && (e.primary_contact?.email || e.secondary_contact?.email));
                     
                     console.log(`${selectedWithEmail.length} selected entities have email addresses`);
@@ -1047,6 +1444,73 @@ const SebiDirectory = () => {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Enhanced Contact Stats with ContactsList features */}
+        <div className="mb-6 bg-white/60 backdrop-blur-sm p-4 rounded-lg border border-white/30 shadow-lg">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            {/* Stats Section */}
+            <div className="flex flex-wrap gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-gray-700">Total:</span>
+                <span className="text-gray-900">{totalEntities}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-green-700">Contacted:</span>
+                <span className="text-green-900">{contactedCount}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-blue-700">Emails Sent:</span>
+                <span className="text-blue-900">{emailSentCount}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-orange-700">Remaining:</span>
+                <span className="text-orange-900">{remainingCount}</span>
+              </div>
+              
+              {/* Person-specific stats */}
+              {personStats.some(stat => stat.count > 0) && (
+                <>
+                  <div className="w-px h-6 bg-gray-300 mx-2"></div>
+                  {personStats.map(({ person, count }) => (
+                    count > 0 && (
+                      <div key={person} className="flex items-center gap-2">
+                        <span className="font-medium text-blue-700">{person}:</span>
+                        <span className="text-blue-900">{count}</span>
+                      </div>
+                    )
+                  ))}
+                </>
+              )}
+              
+              {contactedCount > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-blue-700">Progress:</span>
+                  <div className="w-32 bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${(contactedCount / totalEntities) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-blue-900">{Math.round((contactedCount / totalEntities) * 100)}%</span>
+                </div>
+              )}
+            </div>
+
+            {/* Reset Button */}
+            {(contactedCount > 0 || emailSentCount > 0 || Object.keys(contactStatus).some(id => contactStatus[id]?.notes)) && (
+              <button
+                onClick={handleResetAllContacts}
+                className="px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium shadow-sm hover:shadow-md"
+                title="Reset all contact data"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Reset All
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Email Campaign Stats */}
@@ -1073,7 +1537,7 @@ const SebiDirectory = () => {
             </div>
             <div className="text-center p-4 bg-orange-50 rounded-xl">
               <div className="text-2xl font-bold text-orange-600">
-                {entities.filter(e => (e.primary_contact?.email || e.secondary_contact?.email) && !contactedEntities.has(e.sebi_id)).length}
+                {entities.filter(e => (e.primary_contact?.email || e.secondary_contact?.email) && !contactedEntities.has(getEntityId(e))).length}
               </div>
               <div className="text-sm text-orange-600">Pending</div>
             </div>
@@ -1107,13 +1571,13 @@ const SebiDirectory = () => {
               onClick={() => {
                 const entitiesWithEmail = filteredEntities.filter(e => 
                   (e.primary_contact?.email || e.secondary_contact?.email) && 
-                  !contactedEntities.has(e.sebi_id)
+                  !contactedEntities.has(getEntityId(e))
                 );
                 if (entitiesWithEmail.length > 0) {
                   openEmailModal(entitiesWithEmail[0]);
                 }
               }}
-              disabled={filteredEntities.filter(e => (e.primary_contact?.email || e.secondary_contact?.email) && !contactedEntities.has(e.sebi_id)).length === 0}
+              disabled={filteredEntities.filter(e => (e.primary_contact?.email || e.secondary_contact?.email) && !contactedEntities.has(getEntityId(e))).length === 0}
               className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 text-sm font-medium flex items-center gap-2"
             >
               <Send size={14} />
@@ -1169,9 +1633,9 @@ const SebiDirectory = () => {
           ) : getCurrentPageEntities().length > 0 ? (
             <>
               <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {getCurrentPageEntities().map((entity) => (
-                    <EntityCard key={entity.sebi_id} entity={entity} />
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                  {getCurrentPageEntities().map((entity, index) => (
+                    <EntityCard key={getEntityId(entity)} entity={entity} index={index} />
                   ))}
                 </div>
               </div>
@@ -1230,7 +1694,7 @@ const SebiDirectory = () => {
                 ) : (
                   <div className="space-y-3">
                     {Array.from(contactHistory.entries()).map(([entityId, info]) => {
-                      const entity = entities.find(e => e.sebi_id === entityId);
+                      const entity = entities.find(e => getEntityId(e) === entityId);
                       return (
                         <div key={entityId} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                           <div className="flex items-start justify-between">

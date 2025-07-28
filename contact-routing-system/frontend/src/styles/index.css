@@ -6,7 +6,15 @@ body {
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 
     'Helvetica Neue', Arial, sans-serif;
 }
+html, body {
+  scroll-behavior: auto !important;
+  overflow-x: hidden;
+  /*this is my comment */
+}
 
+* {
+  scroll-behavior: auto !important;
+}
 /* Enhanced responsive app container */
 .app-container {
   display: flex;
@@ -15,6 +23,7 @@ body {
   min-height: 100dvh; /* Modern viewport units for mobile */
   padding: 0;
   margin: 0;
+  
 }
 
 main {
@@ -101,7 +110,7 @@ main {
   }
   
   .text-responsive-sm {
-    font-size: 0.875rem;
+    font-size: 0.876rem;
     line-height: 1.25rem;
   }
   
