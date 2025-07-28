@@ -752,7 +752,14 @@ def health_check():
         },
         'version': '1.0.0'
     })
-
+@app.route('/api', methods=['GET'])
+def root_api():
+    """Root API endpoint to verify backend is running"""
+    return jsonify({
+        'success': True,
+        'message': 'Flask backend is running 🎉',
+        'version': '1.0.0'
+    }), 200
 # ============================================================================
 # MAIN
 # ============================================================================
