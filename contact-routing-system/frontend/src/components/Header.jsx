@@ -273,7 +273,7 @@ const Header = ({ notificationService }) => {
         { to: '/sebi/routing', label: 'Issue Routing', Icon: FileText, description: 'Route SEBI concerns' }
       ]
     },
-    { to: '/settings', label: 'Settings', Icon: Settings },
+   
   ];
 
   // Mobile nav items
@@ -290,7 +290,7 @@ const Header = ({ notificationService }) => {
         { to: '/sebi/routing', label: 'Issue Routing', Icon: FileText }
       ]
     },
-    { to: '/settings', label: 'Settings', Icon: Settings },
+
   ];
 
   useEffect(() => {
@@ -420,60 +420,39 @@ const Header = ({ notificationService }) => {
           </Link>
 
           {/* Enhanced Navigation */}
-          <nav className="hidden md:flex items-center gap-2" aria-label="Main navigation">
-            <ul className="flex gap-1">
-              {navItems.map((item) => (
-                <NavItem 
-                  key={item.label} 
-                  to={item.to} 
-                  label={item.label} 
-                  Icon={item.Icon} 
-                  isScrolled={isScrolled}
-                  isActive={item.hasDropdown ? item.isActive : location.pathname === item.to}
-                  hasDropdown={item.hasDropdown}
-                  onClick={() => {}}
-                >
-                  {item.children && item.children.map((child) => (
-                    <DropdownItem
-                      key={child.to}
-                      to={child.to}
-                      label={child.label}
-                      Icon={child.Icon}
-                      description={child.description}
-                    />
-                  ))}
-                </NavItem>
-              ))}
-            </ul>
-          </nav>
+<div className="ml-auto">
+  <nav className="hidden md:flex items-center gap-2" aria-label="Main navigation">
+    <ul className="flex gap-1">
+      {navItems.map((item) => (
+        <NavItem 
+          key={item.label} 
+          to={item.to} 
+          label={item.label} 
+          Icon={item.Icon} 
+          isScrolled={isScrolled}
+          isActive={item.hasDropdown ? item.isActive : location.pathname === item.to}
+          hasDropdown={item.hasDropdown}
+          onClick={() => {}}
+        >
+          {item.children && item.children.map((child) => (
+            <DropdownItem
+              key={child.to}
+              to={child.to}
+              label={child.label}
+              Icon={child.Icon}
+              description={child.description}
+            />
+          ))}
+        </NavItem>
+      ))}
+    </ul>
+  </nav>
+</div>
+
 
           {/* Enhanced Right Section */}
           <div className="flex items-center gap-2 md:gap-3">
-            {/* Search Bar */}
-            {/* <SearchBar isScrolled={isScrolled} />
-             */}
-            {/* Notifications */}
-            <div className="hidden sm:block">
-              {notificationService ? (
-                <NotificationBell 
-                  notificationService={notificationService} 
-                  isScrolled={isScrolled} 
-                />
-              ) : (
-                <div className={`p-2 md:p-2.5 rounded-2xl animate-pulse ${
-                  isScrolled 
-                    ? 'bg-slate-100' 
-                    : 'bg-white/20 backdrop-blur-md'
-                }`}>
-                  <Bell size={16} className={isScrolled ? 'text-slate-400' : 'text-white/50'} />
-                </div>
-              )}
-            </div>
-            
-            {/* User Avatar */}
-            {/* <div className="hidden sm:block">
-              <UserAvatar isScrolled={isScrolled} />
-            </div> */}
+
 
             {/* Enhanced Mobile Menu Button */}
             <button
@@ -578,27 +557,7 @@ const Header = ({ notificationService }) => {
             </ul>
 
             {/* Mobile Footer */}
-            <div className="mt-auto pt-4 sm:pt-6 border-t border-slate-200">
-              <div className="flex items-center justify-between p-3 sm:p-4 rounded-2xl bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 transition-all duration-300">
-                <div className="flex items-center gap-3">
-                  <UserAvatar isScrolled={true} />
-                  <div>
-                    <p className="font-semibold text-slate-800">Banking Team</p>
-                    <p className="text-xs text-slate-500 flex items-center gap-1">
-                      <Star size={12} className="text-yellow-500" />
-                      Premium User
-                    </p>
-                  </div>
-                </div>
-                
-                <button
-                  onClick={() => setIsDarkMode(!isDarkMode)}
-                  className="p-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 transition-all duration-300 transform hover:scale-105 hover:rotate-180 active:scale-95 shadow-sm"
-                >
-                  {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-                </button>
-              </div>
-            </div>
+            
           </nav>
         </>
       )}
